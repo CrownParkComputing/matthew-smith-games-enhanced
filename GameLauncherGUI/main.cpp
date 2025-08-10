@@ -162,17 +162,36 @@ private:
     }
     
     void launchGameAsync(const std::string& gamePath, const std::string& gameName) {
-        // Minimize the main window to avoid launch conflicts
-        logMemoryUsage("Before window minimize");
+        logMemoryUsage("Before window preparation");
+        
+        // If fullscreen, exit fullscreen first to ensure game gets focus
+        if (isFullscreen) {
+            gtk_window_unfullscreen(window);
+            isFullscreen = false;
+            // Update fullscreen button label
+            GtkWidget* child = gtk_widget_get_first_child(GTK_WIDGET(headerBar));
+            while (child) {
+                if (GTK_IS_BUTTON(child)) {
+                    const char* label = gtk_button_get_label(GTK_BUTTON(child));
+                    if (label && g_str_has_prefix(label, "🪟")) {
+                        gtk_button_set_label(GTK_BUTTON(child), "⛶ Fullscreen");
+                        break;
+                    }
+                }
+                child = gtk_widget_get_next_sibling(child);
+            }
+        }
+        
+        // Minimize the window to avoid launch conflicts
         gtk_window_minimize(window);
         
-        // Process pending events to ensure minimize takes effect
+        // Process pending events to ensure state changes take effect
         while (g_main_context_pending(NULL)) {
             g_main_context_iteration(NULL, FALSE);
         }
         
-        // Small delay to ensure window minimize completes
-        g_usleep(200000); // 200ms
+        // Delay to ensure window state changes complete
+        g_usleep(300000); // 300ms - slightly longer for fullscreen transition
         
         // Create launch status dialog (non-modal)
         auto statusDialog = gtk_message_dialog_new(
@@ -414,15 +433,21 @@ private:
     
     void setupCSS() {
         auto cssProvider = gtk_css_provider_new();
-        // Minimal CSS for efficiency
+        // Improved CSS with better contrast and readability
         const char* css = 
-            ".placeholder-image { font-size: 20px; background-color: #f5f5f5; border: 1px dashed #bbb; }"
-            ".success-text { color: #2e7d32; font-weight: bold; }"
-            ".error-text { color: #c62828; font-weight: bold; }"
-            "window { background-color: #fafafa; }"
-            "headerbar { background-color: #e1f5fe; color: #01579b; }"
-            "frame { border: 1px solid #e0e0e0; background-color: #ffffff; }"
-            ".card-title { color: #1565c0; font-weight: bold; }";
+            ".placeholder-image { font-size: 20px; background-color: #f5f5f5; border: 1px dashed #bbb; color: #666; }"
+            ".success-text { color: #1b5e20; font-weight: bold; }"
+            ".error-text { color: #b71c1c; font-weight: bold; }"
+            "window { background-color: #f8f9fa; }"
+            "headerbar { background-color: #e3f2fd; color: #0d47a1; }"
+            "frame { border: 1px solid #dee2e6; background-color: #ffffff; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }"
+            ".card-title { color: #0d47a1; font-weight: bold; }"
+            ".card-description { color: #212529; font-size: 14px; }"
+            "label { color: #212529; }"
+            "button { margin: 4px; padding: 8px 16px; }"
+            "button.suggested-action { background-color: #1976d2; color: white; border-radius: 6px; }"
+            "button.suggested-action:hover { background-color: #1565c0; }"
+            "button.suggested-action:disabled { background-color: #bdbdbd; color: #757575; }";
             
         gtk_css_provider_load_from_string(cssProvider, css);
         gtk_style_context_add_provider_for_display(
