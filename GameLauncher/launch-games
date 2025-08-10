@@ -1,0 +1,19 @@
+#!/bin/bash
+
+# Matthew Smith Games Launcher Startup Script
+# This script launches the game launcher from anywhere
+
+LAUNCHER_DIR="$(dirname "$(readlink -f "$0")")"
+LAUNCHER_BINARY="$LAUNCHER_DIR/game-launcher"
+
+if [ -x "$LAUNCHER_BINARY" ]; then
+    exec "$LAUNCHER_BINARY"
+else
+    echo "❌ Game launcher not found or not executable!"
+    echo "Expected: $LAUNCHER_BINARY"
+    echo ""
+    echo "Please build the launcher first:"
+    echo "  cd '$LAUNCHER_DIR'"
+    echo "  make"
+    exit 1
+fi

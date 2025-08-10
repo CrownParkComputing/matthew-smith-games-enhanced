@@ -1,0 +1,29 @@
+# Build artifacts
+*.o
+*.d
+linux/
+dist/
+
+# Executables
+ManicMiner/manicminer
+JetSetWilly/jetsetwilly
+GameLauncher/game-launcher
+GameLauncherGUI/game-launcher-gui
+
+# IDE files
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+
+# Temporary files
+*.tmp
+*.temp

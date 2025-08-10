@@ -1,0 +1,66 @@
+Matthew Smith Games - Enhanced Collection
+========================================
+
+This collection contains enhanced ports of classic ZX Spectrum games originally created by Matthew Smith.
+
+ORIGINAL GAMES
+==============
+
+Manic Miner (1983)
+- Original game © Matthew Smith
+- Published by Bug-Byte Ltd. / Software Projects Ltd.
+
+Jet Set Willy (1984) 
+- Original game © Matthew Smith
+- Published by Software Projects Ltd.
+
+ENHANCED PORTS
+==============
+
+The enhanced C ports with SDL2 included in this collection are provided under the following terms:
+
+Copyright (c) 2024 Matthew Smith Games Enhanced Collection Contributors
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.
+
+ADDITIONAL COMPONENTS
+=====================
+
+Game Launchers (Console and GUI):
+- Licensed under MIT License
+- Created specifically for this collection
+- Copyright (c) 2024 Matthew Smith Games Enhanced Collection Contributors
+
+Box Art Images:
+- Original promotional materials
+- Included for historical/educational purposes
+- Copyright remains with original publishers
+
+DISCLAIMER
+==========
+
+This collection is created for educational, historical preservation, and 
+entertainment purposes. The original games remain the intellectual property 
+of Matthew Smith and their respective publishers.
+
+The enhanced ports maintain 100% identical gameplay to the originals while
+adding modern compatibility features.
+
+No commercial use is intended or implied. This is a community preservation
+project celebrating classic gaming history.
