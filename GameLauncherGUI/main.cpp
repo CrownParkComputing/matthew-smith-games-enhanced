@@ -86,6 +86,20 @@ private:
             gtk_window_destroy(GTK_WINDOW(data->statusDialog));
         }
         
+        // Restore the main launcher window
+        data->launcher->logMemoryUsage("Restoring launcher window");
+        gtk_widget_set_visible(GTK_WIDGET(data->launcher->window), TRUE);
+        gtk_window_present(data->launcher->window);
+        gtk_window_unminimize(data->launcher->window);
+        
+        // Process events to ensure window restoration completes
+        while (g_main_context_pending(NULL)) {
+            g_main_context_iteration(NULL, FALSE);
+        }
+        
+        // Small delay to ensure window is fully visible before showing result
+        g_usleep(200000); // 200ms
+        
         // Show completion dialog
         const char* message;
         GtkMessageType msgType;
@@ -182,28 +196,38 @@ private:
             }
         }
         
-        // Minimize the window to avoid launch conflicts
-        gtk_window_minimize(window);
+        // Hide the launcher window completely during game execution
+        logMemoryUsage("Hiding launcher window");
+        gtk_widget_set_visible(GTK_WIDGET(window), FALSE);
         
-        // Process pending events to ensure state changes take effect
+        // Process pending events to ensure window hide takes effect
         while (g_main_context_pending(NULL)) {
             g_main_context_iteration(NULL, FALSE);
         }
         
-        // Delay to ensure window state changes complete
-        g_usleep(300000); // 300ms - slightly longer for fullscreen transition
+        // Delay to ensure window hide completes
+        g_usleep(200000); // 200ms
         
-        // Create launch status dialog (non-modal)
+        // Create launch status dialog (non-modal) - brief notification
         auto statusDialog = gtk_message_dialog_new(
-            nullptr, // No parent to avoid blocking
+            nullptr, // No parent since main window is hidden
             GTK_DIALOG_DESTROY_WITH_PARENT,
             GTK_MESSAGE_INFO,
             GTK_BUTTONS_NONE,
-            "Launching %s...\nGame is running in background.",
+            "Launching %s...\nLauncher will return when game closes.",
             gameName.c_str()
         );
         
         gtk_window_present(GTK_WINDOW(statusDialog));
+        
+        // Auto-close the status dialog after 2 seconds
+        g_timeout_add(2000, [](gpointer data) -> gboolean {
+            GtkWidget* dialog = GTK_WIDGET(data);
+            if (GTK_IS_WIDGET(dialog)) {
+                gtk_window_destroy(GTK_WINDOW(dialog));
+            }
+            return FALSE; // Don't repeat
+        }, statusDialog);
         
         logMemoryUsage("Before async game launch");
         
