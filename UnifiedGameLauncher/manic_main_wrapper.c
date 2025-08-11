@@ -1,12 +1,9 @@
 #include <SDL.h>
-
-#include <time.h>
-
 #include "misc.h"
 #include "video.h"
 #include "audio.h"
-#include "game.h"
 
+// Static variables (copied from main.c)
 static SDL_Window           *sdlWindow;
 static SDL_Renderer         *sdlRenderer;
 static SDL_Texture          *sdlTexture, *sdlTarget;
@@ -14,7 +11,7 @@ static SDL_Surface          *sdlSurface;
 static SDL_Rect             sdlViewport;
 static SDL_AudioDeviceID    sdlAudio;
 
-static const u8             *keyState;
+static const Uint8          *keyState;
 
 const COLOUR                *sysBorder = &videoColour[0];
 
@@ -22,14 +19,15 @@ static int                  gameRunning = 1;
 static int                  isFullscreen = 0;
 
 int                         gameInput;
-
-int                         videoFlash = 0;
+int                         videoSync = 0;
+TIMER                       audioTimer;
 
 EVENT                       Action = Loader_Action;
 EVENT                       Responder = DoNothing;
 EVENT                       Ticker = DoNothing;
 EVENT                       Drawer = DoNothing;
 
+// Function implementations (copied from main.c)
 void DoNothing()
 {
 }
@@ -41,26 +39,25 @@ void DoQuit()
     Ticker = DoNothing;
 }
 
-void System_AudioLock()
+static void SdlCallback(void *unused, Uint8 *stream, int length)
 {
-    SDL_LockAudioDevice(sdlAudio);
-}
+    (void)unused;
 
-void System_AudioUnlock()
-{
-    SDL_UnlockAudioDevice(sdlAudio);
-}
+    short   *output = (short *)stream;
 
-void System_SetPixel(int point, int index)
-{
-    Uint8   *pixel = (Uint8 *)sdlSurface->pixels;
+    while (length)
+    {
+        if (Timer_Update(&audioTimer))
+        {
+            Audio_MusicEvent();
+            Audio_SfxEvent();
+            videoSync = 1;
+        }
 
-    pixel += (point / WIDTH) * sdlSurface->pitch;
-    pixel += (point & 255) * sdlSurface->format->BytesPerPixel;
-
-    *pixel++ = videoColour[index].b;
-    *pixel++ = videoColour[index].g;
-    *pixel++ = videoColour[index].r;
+        Audio_Output(output);
+        output += 2;
+        length -= 4;
+    }
 }
 
 void System_UpdateKeys()
@@ -81,30 +78,6 @@ int System_IsKeyRight()
 int System_IsKeyJump()
 {
     return keyState[SDL_SCANCODE_SPACE];
-}
-
-int System_Rnd()
-{
-    return rand();
-}
-
-void System_Border(int index)
-{
-    sysBorder = &videoColour[index];
-}
-
-static void SdlCallback(void *unused, Uint8 *stream, int length)
-{
-    (void)unused;
-
-    short   *output = (short *)stream;
-
-    while (length)
-    {
-        Audio_Output(output);
-        output += 2;
-        length -= 4;
-    }
 }
 
 static void ToggleFullscreen()
@@ -132,7 +105,7 @@ static void ToggleFullscreen()
     
     // Recreate target texture with new scale
     SDL_DestroyTexture(sdlTarget);
-    SDL_SetHint(SDL_HINT_RENDER_SCALE_QUALITY, "2");
+    SDL_SetHint(SDL_HINT_RENDER_SCALE_QUALITY, "1");
     sdlTarget = SDL_CreateTexture(sdlRenderer, SDL_PIXELFORMAT_ARGB8888, SDL_TEXTUREACCESS_TARGET, WIDTH * multiply, HEIGHT * multiply);
 }
 
@@ -150,7 +123,6 @@ static int System_GetEvent()
     if (event.type == SDL_QUIT)
     {
         DoQuit();
-        return 1;
     }
     
     if (event.type == SDL_WINDOWEVENT && event.window.event == SDL_WINDOWEVENT_RESIZED)
@@ -161,7 +133,7 @@ static int System_GetEvent()
         
         // Recreate target texture with new scale
         SDL_DestroyTexture(sdlTarget);
-        SDL_SetHint(SDL_HINT_RENDER_SCALE_QUALITY, "2");
+        SDL_SetHint(SDL_HINT_RENDER_SCALE_QUALITY, "1");
         sdlTarget = SDL_CreateTexture(sdlRenderer, SDL_PIXELFORMAT_ARGB8888, SDL_TEXTUREACCESS_TARGET, WIDTH * multiply, HEIGHT * multiply);
         
         return 1;
@@ -230,14 +202,42 @@ static int System_GetEvent()
     return 1;
 }
 
-int main()
+void System_SetPixel(int point, int index)
 {
+    Uint8   *pixel = (Uint8 *)sdlSurface->pixels;
+
+    pixel += (point / WIDTH) * sdlSurface->pitch;
+    pixel += (point & 255) * sdlSurface->format->BytesPerPixel;
+
+    *pixel++ = videoColour[index].b;
+    *pixel++ = videoColour[index].g;
+    *pixel++ = videoColour[index].r;
+}
+
+void System_Border(int index)
+{
+    sysBorder = &videoColour[index];
+}
+
+// Main function wrapper that can be called from the unified launcher
+int main_manic_miner(int argc, char** argv)
+{
+    (void)argc;  // Suppress unused parameter warning
+    (void)argv;  // Suppress unused parameter warning
+
     SDL_AudioSpec   want;
     SDL_DisplayMode mode;
     int             multiply;
+    TIMER           timerFrame;
+    int             frame = 0;
 
-    TIMER           timerFlash, timerFrame;
-    int             frame;
+    // Reset game state
+    gameRunning = 1;
+    isFullscreen = 0;
+    Action = Loader_Action;
+    Responder = DoNothing;
+    Ticker = DoNothing;
+    Drawer = DoNothing;
 
     SDL_Init(SDL_INIT_VIDEO | SDL_INIT_AUDIO);
 
@@ -245,13 +245,13 @@ int main()
 
     SDL_GetDesktopDisplayMode(0, &mode);
 
-    sdlWindow = SDL_CreateWindow("Jet-Set Willy", SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, 1024, 768, SDL_WINDOW_SHOWN | SDL_WINDOW_RESIZABLE);
+    sdlWindow = SDL_CreateWindow("Manic Miner", SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, 1024, 768, SDL_WINDOW_SHOWN | SDL_WINDOW_RESIZABLE);
     
     // Calculate viewport for the window size (1024x768) instead of desktop
     multiply = Video_Viewport(1024, 768, &sdlViewport.x, &sdlViewport.y, &sdlViewport.w, &sdlViewport.h);
     sdlRenderer = SDL_CreateRenderer(sdlWindow, -1, SDL_RENDERER_TARGETTEXTURE | SDL_RENDERER_ACCELERATED | SDL_RENDERER_PRESENTVSYNC);
 
-    SDL_SetHint(SDL_HINT_RENDER_SCALE_QUALITY, "2");
+    SDL_SetHint(SDL_HINT_RENDER_SCALE_QUALITY, "1");
     sdlTarget = SDL_CreateTexture(sdlRenderer, SDL_PIXELFORMAT_ARGB8888, SDL_TEXTUREACCESS_TARGET, WIDTH * multiply, HEIGHT * multiply);
 
     SDL_SetHint(SDL_HINT_RENDER_SCALE_QUALITY, "0");
@@ -270,18 +270,14 @@ int main()
 
     keyState = SDL_GetKeyboardState(NULL);
 
-    srand(time(NULL));
-
-    Audio_Init();
-
     Timer_Set(&timerFrame, TICKRATE, mode.refresh_rate);
-    Timer_Set(&timerFlash, 25, TICKRATE * 8); // 25 = 3.125 * 8
+    Timer_Set(&audioTimer, TICKRATE, SAMPLERATE);
 
     while (gameRunning)
     {
-        frame = Timer_Update(&timerFrame);
-
         SDL_LockTextureToSurface(sdlTexture, NULL, &sdlSurface);
+
+        frame = Timer_Update(&timerFrame);
 
         while (frame--)
         {
@@ -298,7 +294,11 @@ int main()
             Ticker();
             Drawer();
 
-            videoFlash ^= Timer_Update(&timerFlash);
+            while (!videoSync)
+            {
+                SDL_Delay(1);
+            }
+            videoSync = 0;
         }
 
         SDL_UnlockTexture(sdlTexture);
@@ -309,11 +309,9 @@ int main()
         SDL_RenderCopy(sdlRenderer, sdlTexture, NULL, NULL);
         SDL_SetRenderTarget(sdlRenderer, NULL);
         SDL_RenderCopy(sdlRenderer, sdlTarget, NULL, &sdlViewport);
+
         SDL_RenderPresent(sdlRenderer);
     }
-
-    // Save score before exiting
-    Game_SaveScore();
 
     SDL_CloseAudioDevice(sdlAudio);
 

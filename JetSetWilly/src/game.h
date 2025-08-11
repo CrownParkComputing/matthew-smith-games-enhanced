@@ -58,6 +58,9 @@ void Game_ChangeLevel(int);
 void Game_Inactivity(int);
 void Game_GameReset(void);
 void Game_DrawStatus(void);
+int Game_GetItemsCollected(void);
+int Game_GetTotalItems(void);
+void Game_SaveScore(void);
 
 // cheat
 extern int      cheatEnabled;

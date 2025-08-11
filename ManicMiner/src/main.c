@@ -3,6 +3,7 @@
 #include "misc.h"
 #include "video.h"
 #include "audio.h"
+#include "game.h"
 
 static SDL_Window           *sdlWindow;
 static SDL_Renderer         *sdlRenderer;
@@ -301,6 +302,9 @@ int main()
 
         SDL_RenderPresent(sdlRenderer);
     }
+
+    // Save score before exiting
+    Game_SaveScore();
 
     SDL_CloseAudioDevice(sdlAudio);
 

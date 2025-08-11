@@ -19,6 +19,9 @@ void Game_GameReset(void);
 void Game_CheckHighScore(void);
 void Game_GotItem(int);
 void Game_ChangeLevel(void);
+int Game_GetScore(void);
+int Game_GetHighScore(void);
+void Game_SaveScore(void);
 
 // cheat
 extern int      cheatEnabled;

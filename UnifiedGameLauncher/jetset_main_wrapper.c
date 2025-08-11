@@ -1,12 +1,10 @@
 #include <SDL.h>
-
 #include <time.h>
-
 #include "misc.h"
 #include "video.h"
 #include "audio.h"
-#include "game.h"
 
+// Static variables (copied from main.c)
 static SDL_Window           *sdlWindow;
 static SDL_Renderer         *sdlRenderer;
 static SDL_Texture          *sdlTexture, *sdlTarget;
@@ -22,7 +20,6 @@ static int                  gameRunning = 1;
 static int                  isFullscreen = 0;
 
 int                         gameInput;
-
 int                         videoFlash = 0;
 
 EVENT                       Action = Loader_Action;
@@ -30,6 +27,7 @@ EVENT                       Responder = DoNothing;
 EVENT                       Ticker = DoNothing;
 EVENT                       Drawer = DoNothing;
 
+// Function implementations (copied from main.c)
 void DoNothing()
 {
 }
@@ -230,14 +228,27 @@ static int System_GetEvent()
     return 1;
 }
 
-int main()
+// Main function wrapper that can be called from the unified launcher
+int main_jet_set_willy(int argc, char** argv)
 {
+    (void)argc;  // Suppress unused parameter warning
+    (void)argv;  // Suppress unused parameter warning
+
     SDL_AudioSpec   want;
     SDL_DisplayMode mode;
     int             multiply;
 
     TIMER           timerFlash, timerFrame;
     int             frame;
+
+    // Reset game state
+    gameRunning = 1;
+    isFullscreen = 0;
+    videoFlash = 0;
+    Action = Loader_Action;
+    Responder = DoNothing;
+    Ticker = DoNothing;
+    Drawer = DoNothing;
 
     SDL_Init(SDL_INIT_VIDEO | SDL_INIT_AUDIO);
 
@@ -311,9 +322,6 @@ int main()
         SDL_RenderCopy(sdlRenderer, sdlTarget, NULL, &sdlViewport);
         SDL_RenderPresent(sdlRenderer);
     }
-
-    // Save score before exiting
-    Game_SaveScore();
 
     SDL_CloseAudioDevice(sdlAudio);
 

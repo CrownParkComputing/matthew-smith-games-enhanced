@@ -58,6 +58,9 @@ static void DoGameoverTicker()
 static void DoGameoverInit()
 {
     Game_CheckHighScore();
+    
+    // Save the score from this game session
+    Game_SaveScore();
 
     Video_PixelFill(0, 128 * WIDTH, 0x0);
     Video_Sprite(112 * WIDTH + 15 * 8, plinthSprite, 0x0, 0x7);

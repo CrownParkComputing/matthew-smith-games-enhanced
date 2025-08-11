@@ -1,6 +1,9 @@
 #include "misc.h"
 #include "audio.h"
 #include "video.h"
+#include <stdio.h>
+#include <stdlib.h>
+#include <sys/stat.h>
 
 #include "game.h"
 
@@ -262,6 +265,45 @@ void Game_GotItem()
 
     audioPanX = minerWilly.x;
     Audio_Sfx(SFX_ITEM);
+}
+
+int Game_GetItemsCollected()
+{
+    return gameScoreItems;
+}
+
+int Game_GetTotalItems()
+{
+    return Level_ItemCount();
+}
+
+void Game_SaveScore()
+{
+    FILE *file;
+    const char *homeDir = getenv("HOME");
+    char filePath[512];
+    
+    if (homeDir) {
+        snprintf(filePath, sizeof(filePath), "%s/.config/matthew-smith-games/jet_set_willy_last_score.txt", homeDir);
+        
+        // Create directory if it doesn't exist
+        char dirPath[512];
+        snprintf(dirPath, sizeof(dirPath), "%s/.config/matthew-smith-games", homeDir);
+        
+        // Try to create directory (ignore if exists)
+        #ifdef _WIN32
+        _mkdir(dirPath);
+        #else
+        mkdir(dirPath, 0755);
+        #endif
+        
+        file = fopen(filePath, "w");
+        if (file) {
+            int totalItems = Level_ItemCount() + gameScoreItems;  // Total items in game
+            fprintf(file, "%d\n%d\n", gameScoreItems, totalItems);
+            fclose(file);
+        }
+    }
 }
 
 static void DoPauseDrawer()

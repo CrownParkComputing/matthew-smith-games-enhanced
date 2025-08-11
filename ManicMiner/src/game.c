@@ -1,6 +1,9 @@
 #include "misc.h"
 #include "audio.h"
 #include "video.h"
+#include <stdio.h>
+#include <stdlib.h>
+#include <sys/stat.h>
 
 #include "game.h"
 
@@ -38,6 +41,44 @@ void Game_CheckHighScore()
     if (gameScore > gameHiScore)
     {
         gameHiScore = gameScore;
+    }
+}
+
+int Game_GetScore()
+{
+    return gameScore;
+}
+
+int Game_GetHighScore()
+{
+    return gameHiScore;
+}
+
+void Game_SaveScore()
+{
+    FILE *file;
+    const char *homeDir = getenv("HOME");
+    char filePath[512];
+    
+    if (homeDir) {
+        snprintf(filePath, sizeof(filePath), "%s/.config/matthew-smith-games/manic_miner_last_score.txt", homeDir);
+        
+        // Create directory if it doesn't exist
+        char dirPath[512];
+        snprintf(dirPath, sizeof(dirPath), "%s/.config/matthew-smith-games", homeDir);
+        
+        // Try to create directory (ignore if exists)
+        #ifdef _WIN32
+        _mkdir(dirPath);
+        #else
+        mkdir(dirPath, 0755);
+        #endif
+        
+        file = fopen(filePath, "w");
+        if (file) {
+            fprintf(file, "%d\n%d\n", gameScore, gameHiScore);
+            fclose(file);
+        }
     }
 }
 
