@@ -23,6 +23,10 @@ private:
     GtkHeaderBar* headerBar;
     bool isFullscreen;
     
+    // Store references to game cards for easy updating
+    GtkWidget* manicCard;
+    GtkWidget* jetsetCard;
+    
     // Use const static strings to reduce memory allocation
     static const std::string PROJECT_DIR_SUFFIX;
     static const std::string MANIC_PATH_SUFFIX;
@@ -214,6 +218,9 @@ private:
                     launcher->saveScores("jet_set_willy_scores.txt", launcher->jetSetWillyScores);
                 }
                 
+                // Refresh UI to show new score immediately
+                launcher->refreshGameCards();
+                
                 // Show confirmation
                 std::string unit = (std::string(scoreType) == "Score") ? "points" : "items";
                 launcher->showInfoDialog("Score Saved", 
@@ -351,7 +358,8 @@ private:
             long seconds;
             long timePoint;
             
-            if (iss >> name >> count >> seconds >> timePoint) {
+            // Parse quoted game name followed by stats
+            if (iss >> std::quoted(name) >> count >> seconds >> timePoint) {
                 for (auto& stat : gameStats) {
                     if (stat.gameName == name) {
                         stat.playCount = count;
@@ -373,7 +381,7 @@ private:
         if (!file.is_open()) return;
         
         for (const auto& stat : gameStats) {
-            file << stat.gameName << " " 
+            file << std::quoted(stat.gameName) << " " 
                  << stat.playCount << " "
                  << stat.totalPlayTime.count() << " "
                  << std::chrono::system_clock::to_time_t(stat.lastPlayed) << "\n";
@@ -481,6 +489,9 @@ private:
                 
                 // Check for automatically saved scores from the games
                 data->launcher->checkForLastScore(data->gameName == "Manic Miner" ? "manic" : "jetset");
+                
+                // Refresh the UI to show updated scores immediately
+                data->launcher->refreshGameCards();
             }
         }
         
@@ -843,6 +854,9 @@ private:
         launcher->saveScores("manic_miner_scores.txt", launcher->manicMinerScores);
         launcher->saveScores("jet_set_willy_scores.txt", launcher->jetSetWillyScores);
         
+        // Refresh UI to show cleared scores immediately
+        launcher->refreshGameCards();
+        
         // Close dialog
         gtk_window_destroy(GTK_WINDOW(dialog));
         
@@ -1013,6 +1027,49 @@ private:
         return frame;
     }
     
+    void refreshGameCards() {
+        // Simple approach: Remove and recreate game cards if they exist
+        if (manicCard && GTK_IS_WIDGET(manicCard)) {
+            gtk_box_remove(mainBox, manicCard);
+            manicCard = nullptr;
+        }
+        if (jetsetCard && GTK_IS_WIDGET(jetsetCard)) {
+            gtk_box_remove(mainBox, jetsetCard);
+            jetsetCard = nullptr;
+        }
+        
+        // Recreate game cards with updated data
+        std::string manicPath = getGamePath("manic");
+        std::string jetsetPath = getGamePath("jetset");
+        
+        bool manicExists = checkGameExists(manicPath);
+        bool jetsetExists = checkGameExists(jetsetPath);
+        
+        manicCard = createGameCard(
+            "Manic Miner", "1983",
+            "Platform adventure. Runs independently.",
+            "manic", manicExists
+        );
+        gtk_box_append(mainBox, manicCard);
+        
+        jetsetCard = createGameCard(
+            "Jet Set Willy", "1984",
+            "Mansion exploration. Non-blocking launch.",
+            "jetset", jetsetExists
+        );
+        gtk_box_append(mainBox, jetsetCard);
+        
+        // Force the UI to update
+        gtk_widget_queue_draw(GTK_WIDGET(mainBox));
+        
+        // Process pending events to ensure immediate refresh
+        while (g_main_context_pending(NULL)) {
+            g_main_context_iteration(NULL, FALSE);
+        }
+        
+        logMemoryUsage("Game Cards Refreshed");
+    }
+    
     void setupCSS() {
         auto cssProvider = gtk_css_provider_new();
         // Improved CSS with better contrast and readability
@@ -1043,7 +1100,8 @@ private:
     }
     
 public:
-    GameLauncherGUI() : app(nullptr), window(nullptr), mainBox(nullptr), headerBar(nullptr), isFullscreen(false) {
+    GameLauncherGUI() : app(nullptr), window(nullptr), mainBox(nullptr), headerBar(nullptr), isFullscreen(false), 
+                        manicCard(nullptr), jetsetCard(nullptr) {
         logMemoryUsage("Constructor Start");
         
         const char* home = getenv("HOME");
@@ -1137,21 +1195,21 @@ public:
         gtk_widget_set_margin_bottom(subtitleLabel, 15);
         gtk_box_append(mainBox, subtitleLabel);
         
-        // Add game cards
+        // Add game cards and store references
         std::string manicPath = getGamePath("manic");
         std::string jetsetPath = getGamePath("jetset");
         
         bool manicExists = checkGameExists(manicPath);
         bool jetsetExists = checkGameExists(jetsetPath);
         
-        auto manicCard = createGameCard(
+        manicCard = createGameCard(
             "Manic Miner", "1983",
             "Platform adventure. Runs independently.",
             "manic", manicExists
         );
         gtk_box_append(mainBox, manicCard);
         
-        auto jetsetCard = createGameCard(
+        jetsetCard = createGameCard(
             "Jet Set Willy", "1984",
             "Mansion exploration. Non-blocking launch.",
             "jetset", jetsetExists
