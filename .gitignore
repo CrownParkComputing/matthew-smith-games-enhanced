@@ -9,6 +9,9 @@ ManicMiner/manicminer
 JetSetWilly/jetsetwilly
 GameLauncher/game-launcher
 GameLauncherGUI/game-launcher-gui
+UnifiedGameLauncher/unified-game-launcher
+UnifiedGameLauncher/unified-game-launcher-debug
+UnifiedGameLauncher/build/
 
 # IDE files
 .vscode/
