@@ -9,13 +9,13 @@ VERSION = 1.0.0
 MANIC_DIR = ManicMiner
 JETSET_DIR = JetSetWilly
 GUI_LAUNCHER_DIR = GameLauncherGUI
-CONSOLE_LAUNCHER_DIR = GameLauncher
+CONSOLE_LAUNCHER_DIR = UnifiedGameLauncher
 
 # Executables
 MANIC_BINARY = $(MANIC_DIR)/manicminer
 JETSET_BINARY = $(JETSET_DIR)/jetsetwilly
 GUI_LAUNCHER_BINARY = $(GUI_LAUNCHER_DIR)/game-launcher-gui
-CONSOLE_LAUNCHER_BINARY = $(CONSOLE_LAUNCHER_DIR)/game-launcher
+CONSOLE_LAUNCHER_BINARY = $(CONSOLE_LAUNCHER_DIR)/unified-game-launcher
 
 # Installation paths
 INSTALL_DIR = ~/.local/bin
@@ -49,7 +49,7 @@ gui-launcher:
 
 console-launcher:
 	@echo "💻 Building Console Launcher..."
-	@cd $(CONSOLE_LAUNCHER_DIR) && $(MAKE)
+	@cd $(CONSOLE_LAUNCHER_DIR) && $(MAKE) -f simple.mk
 	@echo "✅ Console Launcher built successfully!"
 
 # Installation targets
@@ -101,7 +101,7 @@ clean-launchers:
 uninstall:
 	@echo "🗑️ Uninstalling launchers..."
 	@rm -f $(INSTALL_DIR)/game-launcher-gui
-	@rm -f $(INSTALL_DIR)/game-launcher
+	@rm -f $(INSTALL_DIR)/unified-game-launcher
 	@rm -f $(INSTALL_DIR)/manicminer
 	@rm -f $(INSTALL_DIR)/jetsetwilly
 	@rm -f $(DESKTOP_DIR)/matthew-smith-games.desktop
@@ -146,7 +146,7 @@ run-gui: gui-launcher
 
 run-console: console-launcher
 	@echo "🚀 Launching Console Launcher..."
-	@cd $(CONSOLE_LAUNCHER_DIR) && ./game-launcher
+	@cd $(CONSOLE_LAUNCHER_DIR) && ./unified-game-launcher
 
 # Package creation (for distribution)
 package: clean all
@@ -218,7 +218,7 @@ status:
 	@test -x $(CONSOLE_LAUNCHER_BINARY) && echo "  💻 Console Launcher: ✅ Built" || echo "  💻 Console Launcher: ❌ Not built"
 	@echo "Installation:"
 	@test -x $(INSTALL_DIR)/game-launcher-gui && echo "  🎨 GUI Launcher: ✅ Installed" || echo "  🎨 GUI Launcher: ❌ Not installed"
-	@test -x $(INSTALL_DIR)/game-launcher && echo "  💻 Console Launcher: ✅ Installed" || echo "  💻 Console Launcher: ❌ Not installed"
+	@test -x $(INSTALL_DIR)/unified-game-launcher && echo "  💻 Console Launcher: ✅ Installed" || echo "  💻 Console Launcher: ❌ Not installed"
 
 .PHONY: all all-games all-launchers manic-miner jet-set-willy gui-launcher console-launcher \
         install install-launchers install-games uninstall \
